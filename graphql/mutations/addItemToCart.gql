@@ -1,0 +1,27 @@
+mutation addItemToCart($productId: ID!, $quantity: Int!) {
+  addItemToCart(input: {
+      productId: $productId,
+      quantity: $quantity
+  }) {
+    success
+    cart {
+      id
+      customerEmail
+      customerFirstName
+      customerLastName
+      shippingMethod
+      couponCode
+      isGift
+      itemsCount
+      itemsQty
+      grandTotal
+      subTotal
+      items {
+        id
+        name
+        quantity
+        total
+      }
+    }
+  }
+}

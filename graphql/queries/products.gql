@@ -1,0 +1,28 @@
+query products {
+  products {
+    paginatorInfo {
+      count
+      currentPage
+      lastPage
+      total
+    }
+    data {
+      id
+      sku
+      type
+      name
+      description
+      shortDescription
+      price
+      images {
+        id
+        path
+        type
+      }
+      parentId
+      attributeFamilyId
+      createdAt
+      updatedAt
+    }
+  }
+}

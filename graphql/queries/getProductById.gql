@@ -1,0 +1,19 @@
+query product($id: ID!) {
+  product(id: $id) {
+    id
+    sku
+    type
+    name
+    description
+    shortDescription
+    images {
+      id
+      path
+      type
+    }
+    parentId
+    attributeFamilyId
+    createdAt
+    updatedAt
+  }
+}

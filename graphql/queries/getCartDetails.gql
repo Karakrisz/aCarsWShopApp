@@ -1,0 +1,21 @@
+query cartDetail {
+  cartDetail {
+    id
+    customerEmail
+    customerFirstName
+    customerLastName
+    shippingMethod
+    couponCode
+    isGift
+    itemsCount
+    itemsQty
+    grandTotal
+    subTotal
+    items {
+      id
+      name
+      quantity
+      total
+    }
+  }
+}
