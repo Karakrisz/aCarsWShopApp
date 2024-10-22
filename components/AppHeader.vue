@@ -1,38 +1,40 @@
 <script lang="ts" setup>
+import { ref, onMounted, watch } from 'vue'
 import { useState } from 'nuxt/app'
-import { ref, watch } from 'vue'
 
-// Kosár állapot beállítása `useState`-vel
-const cartItems = useState<number>('cartItems', () => {
-  if (process.client) {
-    return JSON.parse(localStorage.getItem('cartItems') || '0')
+// Kosár állapot beállítása
+const cartItems = useState<number>('cartItems', () => 0)
+const cartProducts = useState<any[]>('cartProducts', () => [])
+
+// onMounted: Biztosítjuk, hogy a localStorage-ből betöltés csak a kliens oldalon történjen meg
+onMounted(() => {
+  const storedCartItems = localStorage.getItem('cartItems')
+  const storedCartProducts = localStorage.getItem('cartProducts')
+
+  if (storedCartItems) {
+    cartItems.value = JSON.parse(storedCartItems)
   }
-  return 0  // Szerver oldalon alapértelmezett érték
+  
+  if (storedCartProducts) {
+    cartProducts.value = JSON.parse(storedCartProducts)
+  }
 })
 
-const cartProducts = useState<any[]>('cartProducts', () => {
-  if (process.client) {
-    return JSON.parse(localStorage.getItem('cartProducts') || '[]')
-  }
-  return []
-})
-
-const isCartOpen = useState('isCartOpen', () => false)
-
-// Figyelés és mentés `localStorage`-ba
+// Figyelés és mentés `localStorage`-ba, amikor a kosár állapota változik
 watch(cartItems, (newVal) => {
-  if (process.client) {
+  if (import.meta.client) {
     localStorage.setItem('cartItems', JSON.stringify(newVal))
   }
 })
 
 watch(cartProducts, (newVal) => {
-  if (process.client) {
+  if (import.meta.client) {
     localStorage.setItem('cartProducts', JSON.stringify(newVal))
   }
 })
 
 // Kosár panel nyitása/zárása
+const isCartOpen = ref(false)
 const toggleCartPanel = () => {
   isCartOpen.value = !isCartOpen.value
 }
@@ -164,13 +166,11 @@ const toggleCartPanel = () => {
             </div>
           </div>
 
-          <!-- Kosár ikon -->
           <div class="items-center hidden space-x-4 lg:flex">
             <PhosphorIconUser size="24" />
             <PhosphorIconHeart size="24" />
             <div class="relative">
               <PhosphorIconShoppingCart size="24" @click="toggleCartPanel" />
-              <!-- Tételszám kijelzés -->
               <span
                 v-if="cartItems > 0"
                 class="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs px-2 py-1"
@@ -180,7 +180,7 @@ const toggleCartPanel = () => {
             </div>
           </div>
 
-          <!-- Kosár panel (jobb oldalról beúszó) -->
+          <!-- Kosár panel -->
           <div
             v-if="isCartOpen"
             class="fixed top-0 right-0 w-80 h-full bg-pageRed shadow-lg p-4"
