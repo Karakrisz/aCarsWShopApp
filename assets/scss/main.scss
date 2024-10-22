@@ -3,15 +3,17 @@
 @tailwind utilities;
 
 @layer base {
-
 }
 
 @layer components {
-    .card {
-        @apply flex items-center justify-center shadow-medium border-gray-light bg-white rounded-[10px] hover:bg-gray-light cursor-pointer transition;
-    }
+  .card {
+    @apply flex items-center justify-center shadow-medium border-gray-light bg-white rounded-[10px] hover:bg-gray-light cursor-pointer transition;
+  }
 }
 
 @layer utilities {
-    
+}
+
+.bg-pageRed {
+  background-color: #bb3434;
 }

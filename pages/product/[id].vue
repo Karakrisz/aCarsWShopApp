@@ -1,31 +1,55 @@
 <script lang="ts" setup>
-  import { useRoute } from 'vue-router'
-  import { ref } from 'vue'
-  const config = useRuntimeConfig()
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+import { useState } from 'nuxt/app'
 
-  const route = useRoute()
-  const imageBaseUrl = config.public.IMAGE_BASE_URL
+const config = useRuntimeConfig()
 
-  // Termék lekérdezése a GraphQL-en keresztül
-  const {
-    data: product,
-    pending,
-    error,
-  } = await useAsyncData(`product-${route.params.id}`, async () => {
+const cartItems = useState<number>('cartItems', () => {
+  if (process.client) {
+    return JSON.parse(localStorage.getItem('cartItems') || '0')
+  }
+  return 0
+})
+
+const cartProducts = useState<any[]>('cartProducts', () => {
+  if (process.client) {
+    return JSON.parse(localStorage.getItem('cartProducts') || '[]')
+  }
+  return []
+})
+
+watch(cartItems, (newVal) => {
+  if (process.client) {
+    localStorage.setItem('cartItems', JSON.stringify(newVal))
+  }
+})
+
+watch(cartProducts, (newVal) => {
+  if (process.client) {
+    localStorage.setItem('cartProducts', JSON.stringify(newVal))
+  }
+})
+
+const route = useRoute()
+const imageBaseUrl = config.public.IMAGE_BASE_URL
+
+const { data: product, pending, error } = await useAsyncData(
+  `product-${route.params.id}`,
+  async () => {
     const query = `
-    query product($id: ID!) {
-      product(id: $id) {
-        id
-        name
-        description
-        images {
-          path
+      query product($id: ID!) {
+        product(id: $id) {
+          id
+          name
+          description
+          images {
+            path
+          }
         }
       }
-    }
-  `
+    `
     const variables = { id: route.params.id }
-
     const response = await fetch(config.public.GQL_HOST, {
       method: 'POST',
       headers: {
@@ -39,17 +63,14 @@
 
     const result = await response.json()
     return result.data.product
-  })
+  }
+)
 
-  // Darabszám bevitel kezelése
-  const quantity = ref(1)
+const quantity = ref(1)
+const successMessage = ref(false)
 
-  // Visszajelzés állapot a felhasználónak
-  const successMessage = ref(false)
-
-  // Kosárba helyezési mutáció
-  const addToCart = async () => {
-    const mutation = `
+const addToCart = async () => {
+  const mutation = `
     mutation addItemToCart($productId: ID!, $quantity: Int!) {
       addItemToCart(input: {
         productId: $productId,
@@ -69,31 +90,43 @@
       }
     }
   `
-    const variables = {
-      productId: product.value.id,
-      quantity: quantity.value,
-    }
-
-    const response = await fetch(config.public.GQL_HOST, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: mutation,
-        variables,
-      }),
-    })
-
-    const result = await response.json()
-    if (result.data.addItemToCart.success) {
-      successMessage.value = true
-      console.log('Sikeresen hozzáadva a kosárhoz:', result)
-    } else {
-      successMessage.value = false
-      console.error('Nem sikerült hozzáadni a kosárhoz:', result)
-    }
+  const variables = {
+    productId: product.value.id,
+    quantity: quantity.value,
   }
+
+  const response = await fetch(config.public.GQL_HOST, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query: mutation,
+      variables,
+    }),
+  })
+
+  const result = await response.json()
+  if (result.data.addItemToCart.success) {
+    successMessage.value = true
+    cartItems.value += 1
+    cartProducts.value.push({
+      id: product.value.id,
+      name: product.value.name,
+      quantity: quantity.value,
+    })
+  } else {
+    successMessage.value = false
+  }
+}
+  // const result = await response.json()
+  // if (result.data.addItemToCart.success) {
+  //   successMessage.value = true
+  //   console.log('Sikeresen hozzáadva a kosárhoz:', result)
+  // } else {
+  //   successMessage.value = false
+  //   console.error('Nem sikerült hozzáadni a kosárhoz:', result)
+  // }
 </script>
 
 <template>

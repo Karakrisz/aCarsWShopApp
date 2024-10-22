@@ -3,13 +3,13 @@
   const data = await GqlProducts()
   const imageBaseUrl = config.public.IMAGE_BASE_URL
 
-  function truncateContent(content: string, maxLength: number): string {
-    const textContent = content.replace(/<[^>]*>/g, '')
-    if (textContent.length <= maxLength) {
-      return textContent
-    }
-    return textContent.slice(0, maxLength) + '...'
-  }
+  // function truncateContent(content: string, maxLength: number): string {
+  //   const textContent = content.replace(/<[^>]*>/g, '')
+  //   if (textContent.length <= maxLength) {
+  //     return textContent
+  //   }
+  //   return textContent.slice(0, maxLength) + '...'
+  // }
 
   const topBrands = [
     'audi',

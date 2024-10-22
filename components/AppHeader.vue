@@ -1,3 +1,42 @@
+<script lang="ts" setup>
+import { useState } from 'nuxt/app'
+import { ref, watch } from 'vue'
+
+// Kosár állapot beállítása `useState`-vel
+const cartItems = useState<number>('cartItems', () => {
+  if (process.client) {
+    return JSON.parse(localStorage.getItem('cartItems') || '0')
+  }
+  return 0  // Szerver oldalon alapértelmezett érték
+})
+
+const cartProducts = useState<any[]>('cartProducts', () => {
+  if (process.client) {
+    return JSON.parse(localStorage.getItem('cartProducts') || '[]')
+  }
+  return []
+})
+
+const isCartOpen = useState('isCartOpen', () => false)
+
+// Figyelés és mentés `localStorage`-ba
+watch(cartItems, (newVal) => {
+  if (process.client) {
+    localStorage.setItem('cartItems', JSON.stringify(newVal))
+  }
+})
+
+watch(cartProducts, (newVal) => {
+  if (process.client) {
+    localStorage.setItem('cartProducts', JSON.stringify(newVal))
+  }
+})
+
+// Kosár panel nyitása/zárása
+const toggleCartPanel = () => {
+  isCartOpen.value = !isCartOpen.value
+}
+</script>
 <template>
   <div class="flex flex-col">
     <!-- Top header - hidden on mobile, visible on lg and up -->
@@ -125,10 +164,37 @@
             </div>
           </div>
 
+          <!-- Kosár ikon -->
           <div class="items-center hidden space-x-4 lg:flex">
             <PhosphorIconUser size="24" />
             <PhosphorIconHeart size="24" />
-            <PhosphorIconShoppingCart size="24" />
+            <div class="relative">
+              <PhosphorIconShoppingCart size="24" @click="toggleCartPanel" />
+              <!-- Tételszám kijelzés -->
+              <span
+                v-if="cartItems > 0"
+                class="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs px-2 py-1"
+              >
+                {{ cartItems }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Kosár panel (jobb oldalról beúszó) -->
+          <div
+            v-if="isCartOpen"
+            class="fixed top-0 right-0 w-80 h-full bg-pageRed shadow-lg p-4"
+          >
+            <h2 class="text-xl font-bold">Kosár tartalma</h2>
+            <ul v-if="cartProducts.length > 0">
+              <li v-for="product in cartProducts" :key="product.id">
+                {{ product.name }} - Mennyiség: {{ product.quantity }}
+              </li>
+            </ul>
+            <p v-else>A kosár üres</p>
+            <button @click="toggleCartPanel" class="text-red-600">
+              Bezárás
+            </button>
           </div>
         </div>
       </div>
