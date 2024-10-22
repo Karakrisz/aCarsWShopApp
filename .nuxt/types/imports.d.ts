@@ -5,6 +5,7 @@ declare global {
   const GqlCartDetail: typeof import('../gql')['GqlCartDetail']
   const GqlProduct: typeof import('../gql')['GqlProduct']
   const GqlProducts: typeof import('../gql')['GqlProducts']
+  const GqlRemoveCartItem: typeof import('../gql')['GqlRemoveCartItem']
   const abortNavigation: typeof import('../../node_modules/nuxt/dist/app/composables/router')['abortNavigation']
   const addRouteMiddleware: typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']
   const callOnce: typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']
@@ -203,6 +204,7 @@ declare module 'vue' {
     readonly GqlCartDetail: UnwrapRef<typeof import('../gql')['GqlCartDetail']>
     readonly GqlProduct: UnwrapRef<typeof import('../gql')['GqlProduct']>
     readonly GqlProducts: UnwrapRef<typeof import('../gql')['GqlProducts']>
+    readonly GqlRemoveCartItem: UnwrapRef<typeof import('../gql')['GqlRemoveCartItem']>
     readonly abortNavigation: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['abortNavigation']>
     readonly addRouteMiddleware: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/router')['addRouteMiddleware']>
     readonly callOnce: UnwrapRef<typeof import('../../node_modules/nuxt/dist/app/composables/once')['callOnce']>

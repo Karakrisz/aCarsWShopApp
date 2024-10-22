@@ -1,43 +1,103 @@
 <script lang="ts" setup>
-import { ref, onMounted, watch } from 'vue'
-import { useState } from 'nuxt/app'
+  import { ref, onMounted, watch } from 'vue'
+  import { useState } from 'nuxt/app'
 
-// Kosár állapot beállítása
-const cartItems = useState<number>('cartItems', () => 0)
-const cartProducts = useState<any[]>('cartProducts', () => [])
+  const config = useRuntimeConfig()
 
-// onMounted: Biztosítjuk, hogy a localStorage-ből betöltés csak a kliens oldalon történjen meg
-onMounted(() => {
-  const storedCartItems = localStorage.getItem('cartItems')
-  const storedCartProducts = localStorage.getItem('cartProducts')
+  // Kosár állapot beállítása useState-vel és localStorage használatával
+  const cartItems = useState<number>('cartItems', () => 0)
+  const cartProducts = useState<any[]>('cartProducts', () => [])
 
-  if (storedCartItems) {
-    cartItems.value = JSON.parse(storedCartItems)
+  // onMounted: Betöltés a localStorage-ből, ha a kliens oldalon vagyunk
+  onMounted(() => {
+    const storedCartItems = localStorage.getItem('cartItems')
+    const storedCartProducts = localStorage.getItem('cartProducts')
+
+    if (storedCartItems) {
+      cartItems.value = JSON.parse(storedCartItems)
+    }
+
+    if (storedCartProducts) {
+      cartProducts.value = JSON.parse(storedCartProducts)
+    }
+  })
+
+  // Figyelés és a `localStorage` frissítése, amikor a kosár állapota változik
+  watch(cartItems, (newVal) => {
+    if (import.meta.client) {
+      localStorage.setItem('cartItems', JSON.stringify(newVal))
+    }
+  })
+
+  watch(cartProducts, (newVal) => {
+    if (import.meta.client) {
+      localStorage.setItem('cartProducts', JSON.stringify(newVal))
+    }
+  })
+
+  // Kosár panel nyitása/zárása
+  const isCartOpen = ref(false)
+  const toggleCartPanel = () => {
+    isCartOpen.value = !isCartOpen.value
   }
-  
-  if (storedCartProducts) {
-    cartProducts.value = JSON.parse(storedCartProducts)
-  }
-})
 
-// Figyelés és mentés `localStorage`-ba, amikor a kosár állapota változik
-watch(cartItems, (newVal) => {
-  if (import.meta.client) {
-    localStorage.setItem('cartItems', JSON.stringify(newVal))
-  }
-})
+  // Termék eltávolítása a kosárból GraphQL mutációval
+  const removeCartItem = async (cartItemId: string) => {
+    try {
+      console.log('Kosár tétel ID eltávolításhoz:', cartItemId)
 
-watch(cartProducts, (newVal) => {
-  if (import.meta.client) {
-    localStorage.setItem('cartProducts', JSON.stringify(newVal))
-  }
-})
+      const mutation = `
+      mutation removeCartItem($id: ID!) {
+        removeCartItem(id: $id) {
+          success
+          cart {
+            id
+            items {
+              id
+              name
+              quantity
+              total
+            }
+            grandTotal
+          }
+        }
+      }
+    `
+      const variables = { id: cartItemId }
 
-// Kosár panel nyitása/zárása
-const isCartOpen = ref(false)
-const toggleCartPanel = () => {
-  isCartOpen.value = !isCartOpen.value
-}
+      const response = await fetch(config.public.GQL_HOST, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: mutation,
+          variables,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (result.errors) {
+        console.error('API hiba teljes válasz:', result)
+      }
+
+      // Ellenőrizzük, hogy az API válasza sikeres-e
+      if (result?.data?.removeCartItem?.success) {
+        // Sikeres eltávolítás, frissítsük a kosarat
+        cartProducts.value = cartProducts.value.filter(
+          (product) => product.id !== cartItemId
+        )
+        cartItems.value -= 1
+        localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
+        localStorage.setItem('cartItems', JSON.stringify(cartItems.value))
+      } else {
+        console.error('Nem sikerült eltávolítani a kosár tételt', result)
+      }
+    } catch (error) {
+      console.error('Hiba történt a kosár tétel eltávolításakor:', error)
+    }
+  }
 </script>
 <template>
   <div class="flex flex-col">
@@ -171,6 +231,7 @@ const toggleCartPanel = () => {
             <PhosphorIconHeart size="24" />
             <div class="relative">
               <PhosphorIconShoppingCart size="24" @click="toggleCartPanel" />
+              <!-- Kosár tételek száma -->
               <span
                 v-if="cartItems > 0"
                 class="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs px-2 py-1"
@@ -180,7 +241,7 @@ const toggleCartPanel = () => {
             </div>
           </div>
 
-          <!-- Kosár panel -->
+          <!-- Kosár panel (jobb oldalról beúszó) -->
           <div
             v-if="isCartOpen"
             class="fixed top-0 right-0 w-80 h-full bg-pageRed shadow-lg p-4"
@@ -189,6 +250,12 @@ const toggleCartPanel = () => {
             <ul v-if="cartProducts.length > 0">
               <li v-for="product in cartProducts" :key="product.id">
                 {{ product.name }} - Mennyiség: {{ product.quantity }}
+                <button
+                  @click="removeCartItem(product.id)"
+                  class="text-red-600"
+                >
+                  Eltávolítás
+                </button>
               </li>
             </ul>
             <p v-else>A kosár üres</p>

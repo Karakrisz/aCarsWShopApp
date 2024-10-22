@@ -1392,6 +1392,13 @@ export type AddItemToCartMutationVariables = Exact<{
 
 export type AddItemToCartMutation = { addItemToCart?: { success?: boolean | null, cart?: { id: string, customerEmail?: string | null, customerFirstName?: string | null, customerLastName?: string | null, shippingMethod?: string | null, couponCode?: string | null, isGift: boolean, itemsCount?: number | null, itemsQty?: number | null, grandTotal?: number | null, subTotal?: number | null, items?: Array<{ id: string, name?: string | null, quantity: number, total: number }> | null } | null } | null };
 
+export type RemoveCartItemMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveCartItemMutation = { removeCartItem?: { success?: boolean | null, cart?: { id: string, grandTotal?: number | null, items?: Array<{ id: string, name?: string | null, quantity: number, total: number }> | null } | null } | null };
+
 export type CartDetailQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1432,6 +1439,23 @@ export const AddItemToCartDocument = gql`
         quantity
         total
       }
+    }
+  }
+}
+    `;
+export const RemoveCartItemDocument = gql`
+    mutation removeCartItem($id: ID!) {
+  removeCartItem(id: $id) {
+    success
+    cart {
+      id
+      items {
+        id
+        name
+        quantity
+        total
+      }
+      grandTotal
     }
   }
 }
@@ -1520,6 +1544,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
   return {
     addItemToCart(variables: AddItemToCartMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<AddItemToCartMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<AddItemToCartMutation>(AddItemToCartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'addItemToCart', 'mutation', variables);
+    },
+    removeCartItem(variables: RemoveCartItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RemoveCartItemMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<RemoveCartItemMutation>(RemoveCartItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'removeCartItem', 'mutation', variables);
     },
     cartDetail(variables?: CartDetailQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CartDetailQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CartDetailQuery>(CartDetailDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'cartDetail', 'query', variables);

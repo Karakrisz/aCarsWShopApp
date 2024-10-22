@@ -34,6 +34,6 @@ export { createSitePathResolver, withSiteTrailingSlash, withSiteUrl } from '../n
 export { useGqlHeaders, useGqlToken, useGqlCors, useGqlHost, useGql, useGqlError, useAsyncGql } from '../node_modules/nuxt-graphql-client/dist/runtime/composables/index';
 export { useImage } from '../node_modules/@nuxt/image/dist/runtime/composables';
 export { useMail } from '../node_modules/nuxt-mail/dist/composable';
-export { GqlAddItemToCart, GqlCartDetail, GqlProduct, GqlProducts } from '#gql';
+export { GqlAddItemToCart, GqlCartDetail, GqlProduct, GqlProducts, GqlRemoveCartItem } from '#gql';
 export { useNuxtDevTools } from '../node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';
 export { definePageMeta } from '../node_modules/nuxt/dist/pages/runtime/composables';
