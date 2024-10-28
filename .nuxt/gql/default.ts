@@ -1399,6 +1399,16 @@ export type RemoveCartItemMutationVariables = Exact<{
 
 export type RemoveCartItemMutation = { removeCartItem?: { success?: boolean | null, cart?: { id: string, grandTotal?: number | null, items?: Array<{ id: string, name?: string | null, quantity: number, total: number }> | null } | null } | null };
 
+export type UpdateItemToCartMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type UpdateItemToCartMutation = { updateItemToCart?: { success?: boolean | null, cart?: { id: string, itemsCount?: number | null, itemsQty?: number | null, grandTotal?: number | null, baseGrandTotal?: number | null, subTotal?: number | null, baseSubTotal?: number | null, taxTotal?: number | null, baseTaxTotal?: number | null, discountAmount?: number | null, baseDiscountAmount?: number | null, isActive?: boolean | null, createdAt?: any | null, updatedAt?: any | null } | null } | null };
+
+export type CartItemsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CartItemsQuery = { cartItems?: Array<{ id: string, quantity: number, name?: string | null, price: number, total: number, productId: string }> | null };
+
 export type CartDetailQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -1457,6 +1467,41 @@ export const RemoveCartItemDocument = gql`
       }
       grandTotal
     }
+  }
+}
+    `;
+export const UpdateItemToCartDocument = gql`
+    mutation updateItemToCart {
+  updateItemToCart(input: {qty: [{cartItemId: 6, quantity: 3}]}) {
+    success
+    cart {
+      id
+      itemsCount
+      itemsQty
+      grandTotal
+      baseGrandTotal
+      subTotal
+      baseSubTotal
+      taxTotal
+      baseTaxTotal
+      discountAmount
+      baseDiscountAmount
+      isActive
+      createdAt
+      updatedAt
+    }
+  }
+}
+    `;
+export const CartItemsDocument = gql`
+    query cartItems {
+  cartItems {
+    id
+    quantity
+    name
+    price
+    total
+    productId
   }
 }
     `;
@@ -1547,6 +1592,12 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     removeCartItem(variables: RemoveCartItemMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<RemoveCartItemMutation> {
       return withWrapper((wrappedRequestHeaders) => client.request<RemoveCartItemMutation>(RemoveCartItemDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'removeCartItem', 'mutation', variables);
+    },
+    updateItemToCart(variables?: UpdateItemToCartMutationVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<UpdateItemToCartMutation> {
+      return withWrapper((wrappedRequestHeaders) => client.request<UpdateItemToCartMutation>(UpdateItemToCartDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'updateItemToCart', 'mutation', variables);
+    },
+    cartItems(variables?: CartItemsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CartItemsQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<CartItemsQuery>(CartItemsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'cartItems', 'query', variables);
     },
     cartDetail(variables?: CartDetailQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<CartDetailQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<CartDetailQuery>(CartDetailDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'cartDetail', 'query', variables);

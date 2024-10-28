@@ -1,0 +1,26 @@
+mutation updateItemToCart {
+    updateItemToCart(input: {
+        qty: [{
+            cartItemId: 6
+            quantity: 3
+        }]
+    }) {
+        success
+        cart {
+            id
+            itemsCount
+            itemsQty
+            grandTotal
+            baseGrandTotal
+            subTotal
+            baseSubTotal
+            taxTotal
+            baseTaxTotal
+            discountAmount
+            baseDiscountAmount
+            isActive
+            createdAt
+            updatedAt 
+        }
+    }
+}

@@ -9,7 +9,7 @@ const config = useRuntimeConfig()
 const cartItems = useState<number>('cartItems', () => 0)
 const cartProducts = useState<any[]>('cartProducts', () => [])
 
-// onMounted: Biztosítjuk, hogy a localStorage-ből betöltés csak a kliens oldalon történjen meg
+// Kosár betöltése localStorage-ból, ha van tárolt adat
 onMounted(() => {
   const storedCartItems = localStorage.getItem('cartItems')
   const storedCartProducts = localStorage.getItem('cartProducts')
@@ -23,7 +23,7 @@ onMounted(() => {
   }
 })
 
-// Figyelés és mentés `localStorage`-ba
+// Figyelés és mentés localStorage-ba
 watch(cartItems, (newVal) => {
   if (import.meta.client) {
     localStorage.setItem('cartItems', JSON.stringify(newVal))
@@ -39,6 +39,7 @@ watch(cartProducts, (newVal) => {
 const route = useRoute()
 const imageBaseUrl = config.public.IMAGE_BASE_URL
 
+// Termék lekérdezése a GraphQL-en keresztül
 const { data: product, pending, error } = await useAsyncData(
   `product-${route.params.id}`,
   async () => {
@@ -74,10 +75,11 @@ const { data: product, pending, error } = await useAsyncData(
 const quantity = ref(1)
 const successMessage = ref(false)
 
+// Kosárba helyezés
 const addToCart = async () => {
   cartItems.value += 1
   cartProducts.value.push({
-    id: product.value.id,
+    id: product.value.id, // termék azonosító
     name: product.value.name,
     quantity: quantity.value,
   })

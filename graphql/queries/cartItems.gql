@@ -1,0 +1,11 @@
+query cartItems {
+  cartItems {
+    id # A kosárelem egyedi azonosítója
+    quantity # Kosárelem mennyisége
+    name # Termék neve
+    price # Ár
+    total # Összeg
+    productId # Termék azonosító (ha szükséges)
+    # Bármilyen további adat, ami hasznos lehet a kosár kezeléséhez
+  }
+}

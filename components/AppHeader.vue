@@ -1,52 +1,81 @@
 <script lang="ts" setup>
-  import { ref, onMounted, watch } from 'vue'
-  import { useState } from 'nuxt/app'
+import { ref, onMounted, watch } from 'vue'
+import { useState } from 'nuxt/app'
 
-  const config = useRuntimeConfig()
+const config = useRuntimeConfig()
 
-  // Kosár állapot beállítása useState-vel és localStorage használatával
-  const cartItems = useState<number>('cartItems', () => 0)
-  const cartProducts = useState<any[]>('cartProducts', () => [])
+// Kosár állapot kezelése
+const cartItems = useState<number>('cartItems', () => 0)
+const cartProducts = useState<any[]>('cartProducts', () => [])
 
-  // onMounted: Betöltés a localStorage-ből, ha a kliens oldalon vagyunk
-  onMounted(() => {
-    const storedCartItems = localStorage.getItem('cartItems')
-    const storedCartProducts = localStorage.getItem('cartProducts')
+// Kosár betöltése a localStorage-ból, vagy a szerverről
+onMounted(async () => {
+  const storedCartItems = localStorage.getItem('cartItems')
+  const storedCartProducts = localStorage.getItem('cartProducts')
 
-    if (storedCartItems) {
-      cartItems.value = JSON.parse(storedCartItems)
+  if (storedCartItems && storedCartProducts) {
+    cartItems.value = JSON.parse(storedCartItems)
+    cartProducts.value = JSON.parse(storedCartProducts)
+  } else {
+    // Ha nincs adat, lekérjük a szerverről a kosár részleteit
+    const response = await fetch(config.public.GQL_HOST, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `
+          query cartItems {
+            cartItems {
+              id
+              name
+              quantity
+              price
+              total
+            }
+          }
+        `,
+      }),
+    })
+
+    const result = await response.json()
+
+    if (result?.data?.cartItems) {
+      cartProducts.value = result.data.cartItems
+      cartItems.value = cartProducts.value.length
+
+      // Mentés a localStorage-ba
+      localStorage.setItem('cartItems', JSON.stringify(cartItems.value))
+      localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
     }
-
-    if (storedCartProducts) {
-      cartProducts.value = JSON.parse(storedCartProducts)
-    }
-  })
-
-  // Figyelés és a `localStorage` frissítése, amikor a kosár állapota változik
-  watch(cartItems, (newVal) => {
-    if (import.meta.client) {
-      localStorage.setItem('cartItems', JSON.stringify(newVal))
-    }
-  })
-
-  watch(cartProducts, (newVal) => {
-    if (import.meta.client) {
-      localStorage.setItem('cartProducts', JSON.stringify(newVal))
-    }
-  })
-
-  // Kosár panel nyitása/zárása
-  const isCartOpen = ref(false)
-  const toggleCartPanel = () => {
-    isCartOpen.value = !isCartOpen.value
   }
+})
 
-  // Termék eltávolítása a kosárból GraphQL mutációval
-  const removeCartItem = async (cartItemId: string) => {
-    try {
-      console.log('Kosár tétel ID eltávolításhoz:', cartItemId)
+// Figyelés és mentés a localStorage-ba
+watch(cartItems, (newVal) => {
+  if (import.meta.client) {
+    localStorage.setItem('cartItems', JSON.stringify(newVal))
+  }
+})
 
-      const mutation = `
+watch(cartProducts, (newVal) => {
+  if (import.meta.client) {
+    localStorage.setItem('cartProducts', JSON.stringify(newVal))
+  }
+})
+
+// Kosár panel nyitása/zárása
+const isCartOpen = ref(false)
+const toggleCartPanel = () => {
+  isCartOpen.value = !isCartOpen.value
+}
+
+// Termék eltávolítása a kosárból GraphQL mutációval
+const removeCartItem = async (cartItemId: string) => {
+  try {
+    console.log('Kosár tétel ID eltávolításhoz:', cartItemId)
+
+    const mutation = `
       mutation removeCartItem($id: ID!) {
         removeCartItem(id: $id) {
           success
@@ -63,42 +92,40 @@
         }
       }
     `
-      const variables = { id: cartItemId }
+    const variables = { id: cartItemId }  // A kosárelem azonosítója
 
-      const response = await fetch(config.public.GQL_HOST, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: mutation,
-          variables,
-        }),
-      })
+    const response = await fetch(config.public.GQL_HOST, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables,
+      }),
+    })
 
-      const result = await response.json()
+    const result = await response.json()
 
-      if (result.errors) {
-        console.error('API hiba teljes válasz:', result)
-      }
+    if (result?.data?.removeCartItem?.success) {
+      // Eltávolítás után frissítjük a kosarat
+      cartProducts.value = cartProducts.value.filter(
+        (product) => product.id !== cartItemId
+      )
+      cartItems.value -= 1
 
-      // Ellenőrizzük, hogy az API válasza sikeres-e
-      if (result?.data?.removeCartItem?.success) {
-        // Sikeres eltávolítás, frissítsük a kosarat
-        cartProducts.value = cartProducts.value.filter(
-          (product) => product.id !== cartItemId
-        )
-        cartItems.value -= 1
-        localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
-        localStorage.setItem('cartItems', JSON.stringify(cartItems.value))
-      } else {
-        console.error('Nem sikerült eltávolítani a kosár tételt', result)
-      }
-    } catch (error) {
-      console.error('Hiba történt a kosár tétel eltávolításakor:', error)
+      // Frissítés a localStorage-ban
+      localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
+      localStorage.setItem('cartItems', JSON.stringify(cartItems.value))
+    } else {
+      console.error('Nem sikerült eltávolítani a kosár tételt', result.errors)
     }
+  } catch (error) {
+    console.error('Hiba történt a kosár tétel eltávolításakor:', error)
   }
+}
 </script>
+
 <template>
   <div class="flex flex-col">
     <!-- Top header - hidden on mobile, visible on lg and up -->
@@ -231,14 +258,14 @@
             <PhosphorIconHeart size="24" />
             <div class="relative">
               <PhosphorIconShoppingCart size="24" @click="toggleCartPanel" />
-              <!-- Kosár tételek száma -->
-              <span
-                v-if="cartItems > 0"
-                class="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs px-2 py-1"
-              >
-                {{ cartItems }}
-              </span>
             </div>
+            <!-- Kosár tételek száma -->
+            <span
+              v-if="cartItems > 0"
+              class="absolute top-0 right-0 bg-red-500 text-white rounded-full text-xs px-2 py-1"
+            >
+              {{ cartItems }}
+            </span>
           </div>
 
           <!-- Kosár panel (jobb oldalról beúszó) -->
