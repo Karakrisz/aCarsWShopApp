@@ -99,7 +99,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       GQL_HOST: process.env.GQL_HOST || 'http://127.0.0.1:8001/graphql',
-      IMAGE_BASE_URL: process.env.IMAGE_BASE_URL || 'http://127.0.0.1:8001/storage/'
+      IMAGE_BASE_URL: process.env.IMAGE_BASE_URL || 'http://127.0.0.1:8001/storage/',
+      AUTH_TOKEN: '' 
     }
   }
 })

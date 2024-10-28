@@ -244,6 +244,8 @@ declare module 'nuxt/schema' {
 
    IMAGE_BASE_URL: string,
 
+   AUTH_TOKEN: string,
+
    "graphql-client": {
       clients: {
          default: {

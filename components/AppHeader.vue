@@ -73,10 +73,12 @@
     isCartOpen.value = !isCartOpen.value
   }
 
-  // Termék eltávolítása a kosárból GraphQL mutációval
+
   const removeCartItem = async (cartItemId: string) => {
-    try {
-      const mutation = `
+  try {
+    console.log('Törlésre kijelölt kosárelem ID:', cartItemId)
+
+    const mutation = `
       mutation removeCartItem($id: ID!) {
         removeCartItem(id: $id) {
           success
@@ -93,37 +95,41 @@
         }
       }
     `
-      const variables = { id: cartItemId }
+    const variables = { id: cartItemId }
 
-      const response = await fetch(config.public.GQL_HOST, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: mutation,
-          variables,
-        }),
-      })
+    const response = await fetch(config.public.GQL_HOST, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${config.public.AUTH_TOKEN}`
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables,
+      }),
+    })
 
-      const result = await response.json()
+    const result = await response.json()
+    console.log('Szerver válasza törlésre:', result)
 
-      if (result?.data?.removeCartItem?.success) {
-        // Eltávolítás után frissítjük a kosarat
-        cartProducts.value = cartProducts.value.filter(
-          (product) => product.id !== cartItemId
-        )
-
-        // Frissítjük a localStorage-ban
-        localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
-        cartItems.value = totalItems.value // Frissítjük a kosár mennyiséget
-      } else {
-        console.error('Nem sikerült eltávolítani a kosár tételt', result.errors)
-      }
-    } catch (error) {
-      console.error('Hiba történt a kosár tétel eltávolításakor:', error)
+    if (result?.data?.removeCartItem?.success) {
+      cartProducts.value = cartProducts.value.filter(
+        (product) => product.id !== cartItemId
+      )
+      localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
+      cartItems.value = totalItems.value
+    } else {
+      console.error(
+        'Nem sikerült eltávolítani a kosár tételt:',
+        result.errors || 'Ismeretlen hiba'
+      )
     }
+  } catch (error) {
+    console.error('Hiba történt a kosár tétel eltávolításakor:', error)
   }
+}
+
+
 </script>
 
 <template>
