@@ -77,19 +77,67 @@ const successMessage = ref(false)
 
 // Kosárba helyezés
 const addToCart = async () => {
-  cartItems.value += 1
-  cartProducts.value.push({
-    id: product.value.id, // termék azonosító
-    name: product.value.name,
-    quantity: quantity.value,
-  })
+  try {
+    const mutation = `
+      mutation addItemToCart($productId: ID!, $quantity: Int!) {
+        addItemToCart(input: {
+          productId: $productId,
+          quantity: $quantity
+        }) {
+          success
+          cart {
+            id
+            itemsCount
+            itemsQty
+            grandTotal
+            subTotal
+            items {
+              id
+              name
+              quantity
+              total
+            }
+          }
+        }
+      }
+    `
 
-  // Frissítés localStorage-ban
-  localStorage.setItem('cartItems', JSON.stringify(cartItems.value))
-  localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
+    const variables = {
+      productId: product.value.id,
+      quantity: quantity.value
+    }
 
-  successMessage.value = true
+    const response = await fetch(config.public.GQL_HOST, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables,
+      }),
+    })
+
+    const result = await response.json()
+
+    if (result?.data?.addItemToCart?.success) {
+      // Sikeres hozzáadás esetén frissítjük a lokális kosár adatokat
+      cartProducts.value = result.data.addItemToCart.cart.items
+      cartItems.value = result.data.addItemToCart.cart.itemsCount
+
+      // Mentés a localStorage-ba
+      localStorage.setItem('cartItems', JSON.stringify(cartItems.value))
+      localStorage.setItem('cartProducts', JSON.stringify(cartProducts.value))
+
+      successMessage.value = true
+    } else {
+      console.error('Nem sikerült a kosárhoz adni a terméket:', result.errors)
+    }
+  } catch (error) {
+    console.error('Hiba történt a kosárba helyezés során:', error)
+  }
 }
+
 </script>
 
 <template>
