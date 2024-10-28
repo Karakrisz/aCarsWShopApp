@@ -121,8 +121,12 @@ const addToCart = async () => {
     const result = await response.json()
 
     if (result?.data?.addItemToCart?.success) {
-      // Sikeres hozzáadás esetén frissítjük a lokális kosár adatokat
-      cartProducts.value = result.data.addItemToCart.cart.items
+      // Elemek frissítése és hozzáadása a meglévő kosárhoz, nem felülírva azt
+      cartProducts.value = [
+        ...cartProducts.value, // Meglévő elemek megtartása
+        ...result.data.addItemToCart.cart.items // Új elemek hozzáadása
+      ]
+
       cartItems.value = result.data.addItemToCart.cart.itemsCount
 
       // Mentés a localStorage-ba
